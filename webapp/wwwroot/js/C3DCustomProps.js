@@ -3,9 +3,12 @@
 // *******************************************
 class CustomPropertyPanel extends Autodesk.Viewing.Extensions.ViewerPropertyPanel {
   constructor(viewer, options) {
-    super(viewer, options);
+    super(viewer);
+    this.options = options;
+    this.nodeId = -1;
     this._data = null;
   }
+
   setProperties(properties, options) {
     Autodesk.Viewing.Extensions.ViewerPropertyPanel.prototype.setProperties.call(this, properties, options);
 
@@ -114,6 +117,10 @@ class CustomPropertyPanelExtension extends Autodesk.Viewing.Extension {
       if (workItemStatus.status !== 'success')
         $.notify("Fail to extract style information", "error");
     });
+
+    this.viewer.addEventListener(Autodesk.Viewing.AGGREGATE_SELECTION_CHANGED_EVENT, (e) => {
+      this._panel.setNodeProperties(this._panel.propertyNodeId)
+    })
   }
 }
 

@@ -140,7 +140,7 @@ namespace forgeSample.Controllers
 
       if (!existActivity)
       {
-        string commandLine = string.Format(@"$(engine.path)\\accoreconsole.exe /i $(args[inputFile].path) /al $(appbundles[{0}].path) /s $(settings[script].path)", AppName);
+        string commandLine = string.Format("$(engine.path)\\accoreconsole.exe /i \"$(args[inputFile].path)\" /al \"$(appbundles[{0}].path)\" /s \"$(settings[script].path)\"", AppName);
         Activity activitySpec = new Activity()
         {
           Id = ActivityName,
