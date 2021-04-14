@@ -21,37 +21,37 @@ var viewer;
 // @urn the model to show
 // @viewablesId which viewables to show, applies to BIM 360 Plans folder
 function launchViewer(urn, viewableId, itemId) {
-  var options = {
-    env: 'AutodeskProduction',
-    getAccessToken: getForgeToken,
-    api: 'derivativeV2' + (atob(urn.replace('_', '/')).indexOf('emea') > -1 ? '_EU' : '') // handle BIM 360 US and EU regions
-  };
+	var options = {
+		env: 'AutodeskProduction',
+		getAccessToken: getForgeToken,
+		api: 'derivativeV2' + (atob(urn.replace('_', '/')).indexOf('emea') > -1 ? '_EU' : '') // handle BIM 360 US and EU regions
+	};
 
-  Autodesk.Viewing.Initializer(options, () => {
-    viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'));
-    viewer.start();
-    var documentId = 'urn:' + urn;
-    Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
-  });
+	Autodesk.Viewing.Initializer(options, () => {
+		viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'));
+		viewer.start();
+		var documentId = 'urn:' + urn;
+		Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
+	});
 
-  function onDocumentLoadSuccess(doc) {
-    // if a viewableId was specified, load that view, otherwise the default view
-    var viewables = (viewableId ? doc.getRoot().findByGuid(viewableId) : doc.getRoot().getDefaultGeometry());
-    viewer.loadDocumentNode(doc, viewables).then(i => {
-      // any additional action here?
-    });
-    viewer.loadExtension('Autodesk.Sample.CustomPropertyPanelExtension', { itemId: itemId, versionId: atob(urn.replace('_', '/')) })
-  }
+	function onDocumentLoadSuccess(doc) {
+		// if a viewableId was specified, load that view, otherwise the default view
+		var viewables = (viewableId ? doc.getRoot().findByGuid(viewableId) : doc.getRoot().getDefaultGeometry());
+		viewer.loadDocumentNode(doc, viewables).then(i => {
+			// any additional action here?
+		});
+		viewer.loadExtension('Autodesk.Sample.CustomPropertyPanelExtension', { itemId: itemId, versionId: atob(urn.replace('_', '/')) })
+	}
 
-  function onDocumentLoadFailure(viewerErrorCode) {
-    console.error('onDocumentLoadFailure() - errorCode:' + viewerErrorCode);
-  }
+	function onDocumentLoadFailure(viewerErrorCode) {
+		console.error('onDocumentLoadFailure() - errorCode:' + viewerErrorCode);
+	}
 }
 
 function getForgeToken(callback) {
-  fetch('/api/forge/oauth/token').then(res => {
-    res.json().then(data => {
-      callback(data.access_token, data.expires_in);
-    });
-  });
+	fetch('/api/forge/oauth/token').then(res => {
+		res.json().then(data => {
+			callback(data.access_token, data.expires_in);
+		});
+	});
 }
