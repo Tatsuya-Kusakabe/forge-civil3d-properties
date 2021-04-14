@@ -37,21 +37,23 @@ function launchViewer(urn, viewableId, itemId) {
 	function onDocumentLoadSuccess(doc) {
 		// if a viewableId was specified, load that view, otherwise the default view
 		var viewables = (viewableId ? doc.getRoot().findByGuid(viewableId) : doc.getRoot().getDefaultGeometry());
-		viewer.loadDocumentNode(doc, viewables).then(i => {
-			// any additional action here?
-		});
-		viewer.loadExtension('Autodesk.Sample.CustomPropertyPanelExtension', { itemId: itemId, versionId: atob(urn.replace('_', '/')) })
+		viewer.loadDocumentNode(doc, viewables)
+		viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, onViewerGeometryLoaded)
 	}
 
 	function onDocumentLoadFailure(viewerErrorCode) {
 		console.error('onDocumentLoadFailure() - errorCode:' + viewerErrorCode);
 	}
-}
 
-function getForgeToken(callback) {
-	fetch('/api/forge/oauth/token').then(res => {
-		res.json().then(data => {
-			callback(data.access_token, data.expires_in);
+	function onViewerGeometryLoaded(e) {
+		viewer.loadExtension('Autodesk.Sample.CustomPropertyPanelExtension', { itemId: itemId, versionId: atob(urn.replace('_', '/')) })
+	}
+
+	function getForgeToken(callback) {
+		fetch('/api/forge/oauth/token').then(res => {
+			res.json().then(data => {
+				callback(data.access_token, data.expires_in);
+			});
 		});
-	});
+	}
 }
