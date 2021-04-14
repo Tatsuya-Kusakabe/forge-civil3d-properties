@@ -26,7 +26,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace forgeSample.Controllers
+namespace AspNetCore.Controllers
 {
 	public class DesignAutomationController : ControllerBase
 	{

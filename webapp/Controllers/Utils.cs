@@ -16,7 +16,7 @@
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
 
-namespace forgeSample.Controllers
+namespace AspNetCore.Controllers
 {
 	public static class Utils
 	{

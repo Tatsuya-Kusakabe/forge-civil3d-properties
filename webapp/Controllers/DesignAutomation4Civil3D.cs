@@ -34,7 +34,7 @@ using Parameter = Autodesk.Forge.DesignAutomation.Model.Parameter;
 using WorkItem = Autodesk.Forge.DesignAutomation.Model.WorkItem;
 using WorkItemStatus = Autodesk.Forge.DesignAutomation.Model.WorkItemStatus;
 
-namespace forgeSample.Controllers
+namespace AspNetCore.Controllers
 {
 	public class DesignAutomation4Civil3D
 	{

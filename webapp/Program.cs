@@ -19,7 +19,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
-namespace forgeSample
+namespace AspNetCore
 {
 	public class Program
 	{

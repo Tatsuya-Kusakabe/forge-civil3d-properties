@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 
-namespace forgeSample.Controllers
+namespace AspNetCore.Controllers
 {
 	public class UserController : ControllerBase
 	{

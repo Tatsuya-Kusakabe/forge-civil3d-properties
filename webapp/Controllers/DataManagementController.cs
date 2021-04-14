@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace forgeSample.Controllers
+namespace AspNetCore.Controllers
 {
 	public class DataManagementController : ControllerBase
 	{
