@@ -46,7 +46,7 @@ function launchViewer(urn, viewableId, itemId) {
 	}
 
 	function onViewerGeometryLoaded(e) {
-		viewer.loadExtension('Autodesk.Sample.CustomPropertyPanelExtension', { itemId: itemId, versionId: atob(urn.replace('_', '/')) })
+		viewer.loadExtension('Autodesk.Sample.CustomDockingPanelExtension', { itemId: itemId, versionId: atob(urn.replace('_', '/')) })
 	}
 
 	function getForgeToken(callback) {

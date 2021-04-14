@@ -21,3 +21,9 @@ body {
 #forgeViewer {
   width: 100%;
 }
+
+#toolbar-exportReportTool {
+    background-size: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
