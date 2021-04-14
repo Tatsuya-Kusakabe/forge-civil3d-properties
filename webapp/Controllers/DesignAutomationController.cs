@@ -23,78 +23,77 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json.Linq;
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace forgeSample.Controllers
 {
-  public class DesignAutomationController : ControllerBase
-  {
-    // Used to access the application folder (temp location for files & bundles)
-    private IWebHostEnvironment _env;
-    // used to access the SignalR Hub
-    private IHubContext<DesignAutomationHub> _hubContext;
-    public DesignAutomationController(IWebHostEnvironment env, IHubContext<DesignAutomationHub> hubContext)
-    {
-      _env = env;
-      _hubContext = hubContext;
-    }
+	public class DesignAutomationController : ControllerBase
+	{
+		// Used to access the application folder (temp location for files & bundles)
+		private IWebHostEnvironment _env;
+		// used to access the SignalR Hub
+		private IHubContext<DesignAutomationHub> _hubContext;
+		public DesignAutomationController(IWebHostEnvironment env, IHubContext<DesignAutomationHub> hubContext)
+		{
+			_env = env;
+			_hubContext = hubContext;
+		}
 
-    [HttpPost]
-    [Route("api/styles")]
-    public async Task<IActionResult> GetProperties([FromBody]dynamic body)
-    {
-      Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
-      if (credentials == null) { return null; }
+		[HttpPost]
+		[Route("api/styles")]
+		public async Task<IActionResult> GetProperties([FromBody] dynamic body)
+		{
+			Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
+			if (credentials == null) { return null; }
 
-      string itemId = body["itemId"];
-      string versionId = body["versionId"];
-      string projectId = itemId.Split("/").Reverse().ElementAt(2);
-      string connectionId = body["connectionId"];
+			string itemId = body["itemId"];
+			string versionId = body["versionId"];
+			string projectId = itemId.Split("/").Reverse().ElementAt(2);
+			string connectionId = body["connectionId"];
 
-      ExtractStyles da4c3d = new ExtractStyles();
-      await da4c3d.StartExtractStyles(credentials, projectId, versionId, connectionId, _env.WebRootPath);
+			ExportReports da4c3d = new ExportReports();
+			await da4c3d.StartExportReports(credentials, projectId, versionId, connectionId, _env.WebRootPath);
 
-      return Ok();
-    }
+			return Ok();
+		}
 
-    [HttpPost]
-    [Route("api/forge/callback/designautomation/extractstyles/{connectionId}/{fileName}")]
-    public IActionResult OnReadyExtractStyles(string connectionId, string fileName, [FromBody]dynamic body)
-    {
-      // catch any errors, we don't want to return 500
-      try
-      {
-        // your webhook should return immediately!
-        // so can start a second thread (not good) or use a queueing system (e.g. hangfire)
+		[HttpPost]
+		[Route("api/forge/callback/designautomation/exportreports/{connectionId}/{fileName}")]
+		public IActionResult OnReadyExportReports(string connectionId, string fileName, [FromBody] dynamic body)
+		{
+			// catch any errors, we don't want to return 500
+			try
+			{
+				// your webhook should return immediately!
+				// so can start a second thread (not good) or use a queueing system (e.g. hangfire)
 
-        new System.Threading.Tasks.Task(async () =>
-          {
-            JObject bodyJson = JObject.Parse((string)body.ToString());
-            await _hubContext.Clients.Client(connectionId).SendAsync("onCompleteProps", bodyJson.ToString());
+				new System.Threading.Tasks.Task(async () =>
+				  {
+					  JObject bodyJson = JObject.Parse((string)body.ToString());
+					  await _hubContext.Clients.Client(connectionId).SendAsync("onCompleteProps", bodyJson.ToString());
 
-            if (!bodyJson.GetValue("status").ToString().Equals("success")) return;
+					  if (!bodyJson.GetValue("status").ToString().Equals("success")) return;
 
-            ObjectsApi objects = new ObjectsApi();
-            objects.Configuration.AccessToken = (await Credentials.Get2LeggedTokenAsync(new Scope[] { Scope.DataWrite, Scope.DataRead })).access_token;
-            dynamic signedUrl = await objects.CreateSignedResourceAsyncWithHttpInfo(Utils.BucketName, fileName, new PostBucketsSigned(10), "read");
-            await _hubContext.Clients.Client(connectionId).SendAsync("propsReady", (string)(signedUrl.Data.signedUrl));
+					  ObjectsApi objects = new ObjectsApi();
+					  objects.Configuration.AccessToken = (await Credentials.Get2LeggedTokenAsync(new Scope[] { Scope.DataWrite, Scope.DataRead })).access_token;
+					  dynamic signedUrl = await objects.CreateSignedResourceAsyncWithHttpInfo(Utils.BucketName, fileName, new PostBucketsSigned(10), "read");
+					  await _hubContext.Clients.Client(connectionId).SendAsync("propsReady", (string)(signedUrl.Data.signedUrl));
 
-          }).Start();
-      }
-      catch { }
+				  }).Start();
+			}
+			catch { }
 
-      // ALWAYS return ok (200)
-      return Ok();
-    }
-  }
+			// ALWAYS return ok (200)
+			return Ok();
+		}
+	}
 
-  /// <summary>
-  /// Class uses for SignalR
-  /// </summary>
-  public class DesignAutomationHub : Microsoft.AspNetCore.SignalR.Hub
-  {
-    public string GetConnectionId() { return Context.ConnectionId; }
-  }
+	/// <summary>
+	/// Class uses for SignalR
+	/// </summary>
+	public class DesignAutomationHub : Microsoft.AspNetCore.SignalR.Hub
+	{
+		public string GetConnectionId() { return Context.ConnectionId; }
+	}
 }
