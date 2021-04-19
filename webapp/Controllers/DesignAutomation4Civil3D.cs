@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////
+﻿/////////////////////////////////////////////////////////////////////
 // Copyright (c) Autodesk, Inc. All rights reserved
 // Written by Forge Partner Development
 //
@@ -24,6 +24,7 @@ using Autodesk.Forge.Model;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -42,6 +43,7 @@ namespace AspNetCore.Controllers
 		protected string AppName { get; set; }
 		protected string AppBundleName { get; set; }
 		protected string ActivityName { get; set; }
+		protected string ParamsName { get; set; }
 		protected string ResultName { get; set; }
 		protected string Script { get; set; }
 
@@ -80,17 +82,8 @@ namespace AspNetCore.Controllers
 
 		public async Task EnsureAppBundle(string contentRootPath)
 		{
-			// get the list and check for the name
 			Page<string> appBundles = await _designAutomation.GetAppBundlesAsync();
-			bool existAppBundle = false;
-			foreach (string appName in appBundles.Data)
-			{
-				if (appName.Contains(AppBundleFullName))
-				{
-					existAppBundle = true;
-					continue;
-				}
-			}
+			bool existAppBundle = appBundles.Data.Any(item => item == AppBundleFullName);
 
 			if (!existAppBundle)
 			{
@@ -104,7 +97,6 @@ namespace AspNetCore.Controllers
 					Engine = ENGINE_NAME,
 					Id = AppName,
 					Description = string.Format("Description for {0}", AppBundleName),
-
 				};
 				AppBundle newAppVersion = await _designAutomation.CreateAppBundleAsync(appBundleSpec);
 				if (newAppVersion == null) throw new Exception("Cannot create new app");
@@ -127,20 +119,11 @@ namespace AspNetCore.Controllers
 		public async Task EnsureActivity()
 		{
 			Page<string> activities = await _designAutomation.GetActivitiesAsync();
-
-			bool existActivity = false;
-			foreach (string activity in activities.Data)
-			{
-				if (activity.Contains(ActivityFullName))
-				{
-					existActivity = true;
-					continue;
-				}
-			}
+			bool existActivity = activities.Data.Any(item => item == ActivityFullName);
 
 			if (!existActivity)
 			{
-				string commandLine = string.Format("$(engine.path)\\accoreconsole.exe /i \"$(args[inputFile].path)\" /al \"$(appbundles[{0}].path)\" /s \"$(settings[script].path)\"", AppName);
+				string commandLine = $"$(engine.path)\\accoreconsole.exe /i \"$(args[inputFile].path)\" /al \"$(appbundles[{AppName}].path)\" /s \"$(settings[script].path)\"";
 				Activity activitySpec = new Activity()
 				{
 					Id = ActivityName,
@@ -150,6 +133,7 @@ namespace AspNetCore.Controllers
 					Parameters = new Dictionary<string, Parameter>()
 					{
 						{ "inputFile", new Parameter() { Description = "Input Civil 3D File", LocalName = "$(inputFile)", Ondemand = false, Required = true, Verb = Verb.Get, Zip = false } },
+						{ "params", new Parameter() { Description = "Input Parameters", LocalName = ParamsName, Ondemand = false, Required = true, Verb = Verb.Get, Zip = false } },
 						{ "result", new Parameter() { Description = "Resulting File", LocalName = ResultName, Ondemand = false, Required = true, Verb = Verb.Put, Zip = false } }
 					},
 					Settings = new Dictionary<string, ISetting>()
@@ -211,7 +195,7 @@ namespace AspNetCore.Controllers
 			};
 		}
 
-		protected async Task<WorkItemStatus> SubmitWorkitem(Credentials credentials, string projectId, string versionId, string resultFilename, string callbackUrl)
+		protected async Task<WorkItemStatus> SubmitWorkitem(Credentials credentials, string projectId, string versionId, string alignName, string resultFilename, string callbackUrl)
 		{
 			WorkItem workItemSpec = new WorkItem()
 			{
@@ -219,6 +203,7 @@ namespace AspNetCore.Controllers
 				Arguments = new Dictionary<string, IArgument>()
 				{
 					{ "inputFile", await BuildDownloadURL(credentials.TokenInternal, projectId, versionId) },
+					{ "params",  new XrefTreeArgument() { Url = $"data:application/json,{{ \"name\": \"{alignName}\" }}" } },
 					{ "result",  await BuildUploadURL(resultFilename) },
 					{ "onComplete", new XrefTreeArgument { Verb = Verb.Post, Url = callbackUrl } }
 				}
@@ -227,26 +212,51 @@ namespace AspNetCore.Controllers
 		}
 	}
 
-	public class ExportReports : DesignAutomation4Civil3D
+	public class ExportAlignmentName : DesignAutomation4Civil3D
 	{
-		public ExportReports()
+		public ExportAlignmentName()
 		{
-			AppName = "ExportReports";
+			AppName = "ExportAlignmentName";
 			AppBundleName = "ExportReports.zip";
-			ActivityName = "ExportReportsActivity";
-			ResultName = "result.json";
-			Script = "ExportReports\n";
+			ActivityName = "ExportAlignmentNameActivity";
+			ParamsName = "Dummy.json";
+			ResultName = "AlignmentName.json";
+			Script = "ExportAlignmentName\n";
 		}
 
-		public async Task StartExportReports(Credentials credentials, string projectId, string versionId, string connectionId, string contentRootPath)
+		public async Task StartExportAlignmentName(Credentials credentials, string projectId, string versionId, string connectionId, string contentRootPath)
 		{
 			await EnsureAppBundle(contentRootPath);
 			await EnsureActivity();
 
 			string resultFilename = versionId.Base64Encode() + ".json";
-			string callbackUrl = string.Format("{0}/api/forge/callback/designautomation/exportreports/{1}/{2}", Credentials.GetAppSetting("FORGE_WEBHOOK_URL"), connectionId, resultFilename);
+			string callbackUrl = string.Format("{0}/api/forge/callback/designautomation/exportalignmentname/{1}/{2}", Credentials.GetAppSetting("FORGE_WEBHOOK_URL"), connectionId, resultFilename);
 
-			await SubmitWorkitem(credentials, projectId, versionId, resultFilename, callbackUrl);
+			await SubmitWorkitem(credentials, projectId, versionId, "Dummy", resultFilename, callbackUrl);
+		}
+	}
+
+	public class ExportReport : DesignAutomation4Civil3D
+	{
+		public ExportReport()
+		{
+			AppName = "ExportReport";
+			AppBundleName = "ExportReports.zip";
+			ActivityName = "ExportReportActivity";
+			ParamsName = "AlignmentNameForReport.json";
+			ResultName = "Report.xlsx";
+			Script = "ExportReport\n";
+		}
+
+		public async Task StartExportReport(Credentials credentials, string projectId, string versionId, string connectionId, string alignName, string contentRootPath)
+		{
+			await EnsureAppBundle(contentRootPath);
+			await EnsureActivity();
+
+			string resultFilename = versionId.Base64Encode() + ".xlsx";
+			string callbackUrl = string.Format("{0}/api/forge/callback/designautomation/exportreport/{1}/{2}", Credentials.GetAppSetting("FORGE_WEBHOOK_URL"), connectionId, resultFilename);
+
+			await SubmitWorkitem(credentials, projectId, versionId, alignName, resultFilename, callbackUrl);
 		}
 	}
 }

@@ -40,9 +40,9 @@ namespace AspNetCore
 			if (env.IsDevelopment())
 			{
 				app.UseDeveloperExceptionPage();
-				// clean up on every run... :) 
-				Controllers.ExportReports da4c3d = new Controllers.ExportReports();
-				da4c3d.ClearAccount();
+				// clean up on every run... :)
+				Controllers.ExportAlignmentName exportAlignmentName = new Controllers.ExportAlignmentName();
+				exportAlignmentName.ClearAccount();
 			}
 
 			app.UseRouting();

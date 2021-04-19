@@ -41,8 +41,8 @@ namespace AspNetCore.Controllers
 		}
 
 		[HttpPost]
-		[Route("api/styles")]
-		public async Task<IActionResult> GetProperties([FromBody] dynamic body)
+		[Route("api/alignmentname")]
+		public async Task<IActionResult> GetAlignmentName([FromBody] dynamic body)
 		{
 			Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
 			if (credentials == null) { return null; }
@@ -52,15 +52,66 @@ namespace AspNetCore.Controllers
 			string projectId = itemId.Split("/").Reverse().ElementAt(2);
 			string connectionId = body["connectionId"];
 
-			ExportReports da4c3d = new ExportReports();
-			await da4c3d.StartExportReports(credentials, projectId, versionId, connectionId, _env.WebRootPath);
+			ExportAlignmentName exportAlignName = new ExportAlignmentName();
+			await exportAlignName.StartExportAlignmentName(credentials, projectId, versionId, connectionId, _env.WebRootPath);
 
 			return Ok();
 		}
 
 		[HttpPost]
-		[Route("api/forge/callback/designautomation/exportreports/{connectionId}/{fileName}")]
-		public IActionResult OnReadyExportReports(string connectionId, string fileName, [FromBody] dynamic body)
+		[Route("api/report")]
+		public async Task<IActionResult> GetReport([FromBody] dynamic body)
+		{
+			Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
+			if (credentials == null) { return null; }
+
+			string itemId = body["itemId"];
+			string versionId = body["versionId"];
+			string projectId = itemId.Split("/").Reverse().ElementAt(2);
+			string connectionId = body["connectionId"];
+			string alignName = body["name"];
+
+			ExportReport exportReport = new ExportReport();
+			await exportReport.StartExportReport(credentials, projectId, versionId, connectionId, alignName, _env.WebRootPath);
+
+			return Ok();
+		}
+
+		[HttpPost]
+		[Route("api/forge/callback/designautomation/exportalignmentname/{connectionId}/{fileName}")]
+		public IActionResult OnReadyAlignmentName(string connectionId, string fileName, [FromBody] dynamic body)
+		{
+			// catch any errors, we don't want to return 500
+			try
+			{
+				// your webhook should return immediately!
+				// so can start a second thread (not good) or use a queueing system (e.g. hangfire)
+
+				new Task(async () =>
+				{
+					JObject bodyJson = JObject.Parse((string)body.ToString());
+					if (!bodyJson.GetValue("status").ToString().Equals("success"))
+					{
+						await _hubContext.Clients.Client(connectionId).SendAsync("alignNameFailed");
+						return;
+					}
+
+					ObjectsApi objects = new ObjectsApi();
+					objects.Configuration.AccessToken = (await Credentials.Get2LeggedTokenAsync(new Scope[] { Scope.DataWrite, Scope.DataRead })).access_token;
+					dynamic signedUrl = await objects.CreateSignedResourceAsyncWithHttpInfo(Utils.BucketName, fileName, new PostBucketsSigned(10), "read");
+					await _hubContext.Clients.Client(connectionId).SendAsync("alignNameReady", (string)(signedUrl.Data.signedUrl));
+
+				}).Start();
+			}
+			catch { }
+
+			// ALWAYS return ok (200)
+			return Ok();
+		}
+
+		[HttpPost]
+		[Route("api/forge/callback/designautomation/exportreport/{connectionId}/{fileName}")]
+		public IActionResult OnReadyReport(string connectionId, string fileName, [FromBody] dynamic body)
 		{
 			// catch any errors, we don't want to return 500
 			try
@@ -69,18 +120,20 @@ namespace AspNetCore.Controllers
 				// so can start a second thread (not good) or use a queueing system (e.g. hangfire)
 
 				new System.Threading.Tasks.Task(async () =>
-				  {
-					  JObject bodyJson = JObject.Parse((string)body.ToString());
-					  await _hubContext.Clients.Client(connectionId).SendAsync("onCompleteProps", bodyJson.ToString());
+				{
+					JObject bodyJson = JObject.Parse((string)body.ToString());
+					if (!bodyJson.GetValue("status").ToString().Equals("success"))
+					{
+						await _hubContext.Clients.Client(connectionId).SendAsync("reportFailed");
+						return;
+					}
 
-					  if (!bodyJson.GetValue("status").ToString().Equals("success")) return;
+					ObjectsApi objects = new ObjectsApi();
+					objects.Configuration.AccessToken = (await Credentials.Get2LeggedTokenAsync(new Scope[] { Scope.DataWrite, Scope.DataRead })).access_token;
+					dynamic signedUrl = await objects.CreateSignedResourceAsyncWithHttpInfo(Utils.BucketName, fileName, new PostBucketsSigned(10), "read");
+					await _hubContext.Clients.Client(connectionId).SendAsync("reportReady", (string)(signedUrl.Data.signedUrl));
 
-					  ObjectsApi objects = new ObjectsApi();
-					  objects.Configuration.AccessToken = (await Credentials.Get2LeggedTokenAsync(new Scope[] { Scope.DataWrite, Scope.DataRead })).access_token;
-					  dynamic signedUrl = await objects.CreateSignedResourceAsyncWithHttpInfo(Utils.BucketName, fileName, new PostBucketsSigned(10), "read");
-					  await _hubContext.Clients.Client(connectionId).SendAsync("propsReady", (string)(signedUrl.Data.signedUrl));
-
-				  }).Start();
+				}).Start();
 			}
 			catch { }
 
