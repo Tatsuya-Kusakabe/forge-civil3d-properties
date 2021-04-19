@@ -1,12 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ApplicationPackage SchemaVersion="1.0" Version="1.0" ProductCode="{F11EA57A-1E7E-4B6D-8E81-986B071E3E07}" Name="ExtractStyles" Description="Sample Plugin for Civil 3D" Author="Forge Advocates team">
+<ApplicationPackage SchemaVersion="1.0" Version="1.0" ProductCode="{F11EA57A-1E7E-4B6D-8E81-986B071E3E07}" Name="ExportReports" Description="Sample Plugin for Civil 3D" Author="Forge Advocates team">
 	<CompanyDetails Name="Autodesk, Inc" Url="http://learnforge.autodesk.io" Email="forge.help@autodesk.com"/>
 	<Components>
 		<RuntimeRequirements OS="Win64" Platform="AutoCAD"/>
-		<ComponentEntry AppName="ExportReports" ModuleName="./Contents/ExportReports.dll" AppDescription="Extract style information" LoadOnCommandInvocation="True" LoadOnAutoCADStartup="True">
+		<ComponentEntry AppName="ExportReports" ModuleName="./Contents/ExportReports.dll" AppDescription="Export alignment reports" LoadOnCommandInvocation="True" LoadOnAutoCADStartup="True">
 			<Commands GroupName="FPDCommands">
-				<Command Global="ExportReports" Local="ExportReports"/>
-			</Commands>
+        <Command Global="ExportAlignmentName" Local="ExportAlignmentName"/>
+        <Command Global="ExportReport" Local="ExportReport"/>
+      </Commands>
 		</ComponentEntry>
 	</Components>
 </ApplicationPackage>
