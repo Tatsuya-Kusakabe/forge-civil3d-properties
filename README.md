@@ -1,26 +1,32 @@
-# Extract style information - Civil 3D
+# Extract alignment names and export report - Civil 3D
 
 ![Platforms](https://img.shields.io/badge/Webapp-Windows|MacOS|Linux-lightgray.svg)
 ![.NET Core](https://img.shields.io/badge/.NET%20Core-3.0-blue.svg)
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-3.0-blue.svg)](https://asp.net/)
+
 [![oAuth2](https://img.shields.io/badge/oAuth2-v1-green.svg)](http://developer.autodesk.com/)
 [![Data-Management](https://img.shields.io/badge/Data%20Management-v1-green.svg)](http://developer.autodesk.com/)
 [![Design-Automation](https://img.shields.io/badge/Design%20Automation-v3-green.svg)](http://developer.autodesk.com/)
+[![Viewer](https://img.shields.io/badge/Viewer-v7-green.svg)](http://developer.autodesk.com/)
 
 ![Platforms](https://img.shields.io/badge/Plugins-Windows-lightgray.svg)
-![.NET](https://img.shields.io/badge/.NET%20Framework-4.7-blue.svg)
-[![Civil 3D](https://img.shields.io/badge/Civil%203D-2020-lightblue.svg)](http://developer.autodesk.com/)
+![.NET](https://img.shields.io/badge/.NET%20Framework-4.7.2-blue.svg)
+[![Civil 3D](https://img.shields.io/badge/Civil%203D-2021-lightblue.svg)](http://developer.autodesk.com/)
 
 ![Intermediate](https://img.shields.io/badge/Level-Intermediate-green.svg)
 [![License](http://img.shields.io/:license-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
 # Description
 
-This sample demonstrates using Design Automation with Civil 3D support included in the AutoCAD engine. User can select a DWG file hosted on BIM 360 Document Manager (or A360) and view using the Forge Viewer. 
+This sample demonstrates using Design Automation with Civil 3D support included in the AutoCAD engine. User can select a DWG file hosted on BIM 360 Document Manager (or A360) and view using the Forge Viewer.
 
-Once the file is loaded, in the background, a Design Automation workitem will run a .NET plugin to extract additional `Style` information from the file. When ready, the information will be visible on the property panel. 
+Once the file is loaded, in the background, a Design Automation workitem will run a .NET plugin to extract alignment names from the file. When ready, the information will be visible on the property panel.
+
+When one of alignment names is selected, in the background, , a Design Automation workitem will run again to export alignment report. When ready, the excel sheet is automatically downloaded. 
 
 This sample is based on the [Learn Forge](http://learnforge.autodesk.io) tutorials (`View hubs` section).
+
+This sample is forked from [Extract style information - Civil 3D](https://github.com/Autodesk-Forge/forge-civil3d-properties) samples.
 
 # Thumbnail
 
@@ -34,7 +40,7 @@ This sample is based on the [Learn Forge](http://learnforge.autodesk.io) tutoria
 2. **Visual Studio**: Either Community (Windows) or Code (Windows, MacOS). 
 3. **.NET Core** basic knowledge with C#
 4. **ngrok**: Routing tool, [download here](https://ngrok.com/)
-7. **Civil 3D** 2020: required to compile changes into the plugin. Windows only.
+7. **Civil 3D** 2021: required to compile changes into the plugin. Windows only.
 
 For using this sample, you need an Autodesk developer credentials. Visit the [Forge Developer Portal](https://developer.autodesk.com), sign up for an account, then [create an app](https://developer.autodesk.com/myapps/create) that uses Data Management and Model Derivative APIs. For this new app, use `http://localhost:3000/api/forge/callback/oauth` as Callback URL, although is not used on 2-legged flow. Finally take note of the **Client ID** and **Client Secret**.
 
@@ -42,20 +48,30 @@ For using this sample, you need an Autodesk developer credentials. Visit the [Fo
 
 Clone this project or download it. It's recommended to install [GitHub desktop](https://desktop.github.com/). To clone it via command line, use the following (**Terminal** on MacOSX/Linux, **Git Shell** on Windows):
 
-    git clone https://git.autodesk.com/goncala/bim360civil
+    git clone https://github.com/Tatsuya-Kusakabe/forge-civil3d-reports
 
 
 **Visual Studio** (Windows):
 
 Right-click on the project, then go to **Debug**. Adjust the settings as shown below. 
 
+`FORGE_CALLBACK_URL` also has to be written as described in **Environment variables** section.
+
 ![](readme/visual_studio_settings.png)
 
-**Visual Sutdio Code** (Windows, MacOS):
+**Visual Studio Code** (Windows, MacOS):
 
 Open the folder, at the bottom-right, select **Yes** and **Restore**. This restores the packages (e.g. Autodesk.Forge) and creates the launch.json file. See *Tips & Tricks* for .NET Core on MacOS.
 
 ![](readme/visual_code_restore.png)
+
+**7-Zip**
+
+The **Post-build** event in Visual Studio uses 7-Zip to automatically build and copy AppBundle. 7-Zip has to be installed under the %PROGRAMFILES% folder.
+
+**IIS**
+
+IIS (Internet Information Services) has to be activated from Windows Control Panel.
 
 **ngrok**
 
@@ -82,7 +98,7 @@ A compiled version of the `Civil 3D` plugin (.bundles) is included on the `webap
 
 Start the app.
 
-Open `http://localhost:3000` to start the app, select a DWG file. A pop-up will indicate when the style information is ready.
+Open `http://localhost:3000` to start the app, select a DWG file. The demo thumbnail shows you how to navigate.
 
 ## Deployment
 
